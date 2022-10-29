@@ -24,11 +24,11 @@ var timerMax = 0
 progb.style.max = timerMax
 function count(){
 	if(timerOn && timer < timerMax){
-	timer = timer + 1000000;
+	timer = timer + 100;
 	progb.value = timer;
 	progb.getElementsByTagName("span")[0].textContent = timer;
 	}
-setTimeout("count()", 1000000);
+setTimeout("count()", 100);
 }
 count();
 
@@ -98,8 +98,8 @@ function receiveGame(position, col = false, deadline = false, time = false){
 	console.log(deadline)
 	console.log(time)
 	if (deadline && time){
-		deadline = deadline.secs_since_epoch*1000000000 + deadline.nanos_since_epoch
-		time = time.secs_since_epoch*1000000000 + time.nanos_since_epoch
+		deadline = deadline.secs_since_epoch*1000 + (deadline.nanos_since_epoch/1000000)
+		time = time.secs_since_epoch*1000 + (time.nanos_since_epoch/1000000)
 		timerMax = deadline-time
 		timerOn = true
 		date = new Date().getTime()
