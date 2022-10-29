@@ -16,7 +16,15 @@
 <script>
 // --- Begin Example JS --------------------------------------------------------
 myBoard = document.getElementById("myBoard");
-myBoard.style["width"] = "window.innerWidth"
+myBoard.style["width"] = Math.min(window.innerWidth, window.innerHeight)
+window.addEventListener("resize", resize);
+
+function resize(){
+	console.log("resize")
+	var newWidth = Math.min(window.innerWidth, window.innerHeight)
+	console.log(newWidth)
+	myBoard.style["width"] = newWidth
+}
 	
 const evtSource = new EventSource("state", {} );
 	
@@ -73,6 +81,7 @@ function receiveGame(position, colour = false){
 	} else {
 		board.orientation('black')
 	}
+	board.position(game.fen())
 }
 
 function sendMove(from, to){
