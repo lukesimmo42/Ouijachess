@@ -15,8 +15,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js" integrity="sha384-s3XgLpvmHyscVpijnseAmye819Ee3yaGa8NxstkJVyA6nuDFjt59u1QvuEl/mecz" crossorigin="anonymous"></script>
 <script>
 // --- Begin Example JS --------------------------------------------------------
-// NOTE: this example uses the chess.js library:
-// https://github.com/jhlywa/chess.js
+myBoard = document.getElementById("myBoard");
+myBoard.style["width"] = "window.innerWidth"
 	
 const evtSource = new EventSource("../state", {} );
 	
@@ -57,7 +57,7 @@ function blueSquare (square) {
 	
 var started = true
 var colour = false
-var player_id = 'string'
+var player_id = Math.floor(Math.random() * (999999999999 - 100000000000) + 100000000000)
 
 var board = null
 var game = new Chess()
@@ -84,7 +84,7 @@ function sendMove(from, to){
 	//Send the proper header information along with the request
 	xhr.setRequestHeader("Content-type", "application/json");
 	mov = from + to
-	obj = {player_id: "string", mov: mov}
+	obj = {player_id: player_id, mov: mov}
 	let data = JSON.stringify(obj);
 	console.log(data)
 	xhr.send(data);
