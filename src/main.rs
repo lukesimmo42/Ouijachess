@@ -46,6 +46,8 @@ use chess::{
     MoveGen,
 };
 
+use time::OffsetDateTime;
+
 use tokio::sync::watch;
 
 use rand::prelude::*;
@@ -55,6 +57,8 @@ use std::collections::{HashMap, HashSet};
 use std::collections::hash_map::Entry;
 use std::str::FromStr;
 use std::time::Duration;
+
+type DeadlineTime = std::time::SystemTime;//OffsetDateTime;
 
 #[tokio::main]
 async fn main() {
@@ -119,6 +123,8 @@ struct StateUpdate {
     fen: String,
     votes: u32,
     team: Team,
+    start_time: Option<DeadlineTime>,
+    deadline: Option<DeadlineTime>,
 }
 
 async fn handle_vote(Path(game_id): Path<String>, extract::Json(payload): extract::Json<VoteRequest>, Extension(shared_state): Extension<Arc<Mutex<SharedState>>>) {
@@ -160,6 +166,8 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
         player_count: 0,
         board: Board::default(),
         status: GameStatus::Waiting,
+        start_time: None,
+        deadline: None,
     };
 
     let (state_tx, mut state_rx) = watch::channel(game_state);
@@ -192,12 +200,19 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
         }
     }
 
-    shared_state.lock().await.get_game(&game_id).unwrap().state_tx.send_modify(|state| state.status = GameStatus::Ongoing);
+    let move_time = Duration::from_secs(10);
+
+    let start_time = DeadlineTime::now();
+    let deadline = start_time + move_time;
+    shared_state.lock().await.get_game(&game_id).unwrap().state_tx.send_modify(|state| {
+        state.status = GameStatus::Ongoing;
+        state.start_time = Some(start_time);
+        state.deadline = Some(deadline);
+    });
 
     println!("Game {} started", game_id);
 
     // Start game
-    let move_time = Duration::from_secs(10);
     loop {
         tokio::time::sleep(move_time).await;
         {
@@ -216,14 +231,23 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
             let board_ = state_rx.borrow().board.make_move_new(chosen_move);
 
             if board_.status() != BoardStatus::Ongoing {
-                game.state_tx.send_modify(|state| state.status = GameStatus::Over);
+                game.state_tx.send_modify(|state| {
+                    state.status = GameStatus::Over;
+                    state.deadline = None;
+                });
                 break;
             }
 
             game.voted.clear();
             game.moves.clear();
 
-            game.state_tx.send_modify(|state| state.board = board_);
+            let start_time = DeadlineTime::now();
+            let deadline = start_time + move_time;
+            game.state_tx.send_modify(|state| { 
+                state.board = board_; 
+                state.start_time = Some(start_time);
+                state.deadline = Some(deadline); 
+            });
         }
 
     }
@@ -241,6 +265,10 @@ struct GameState {
     player_count: u32,
     board: Board,
     status: GameStatus,
+    // Time this move started
+    start_time: Option<DeadlineTime>,
+    // Time this move needs to be done by
+    deadline: Option<DeadlineTime>,
 }
 
 struct Game {
@@ -265,6 +293,8 @@ impl GameState {
             fen: format!("{}", self.board),
             votes: self.vote_count,
             team,
+            start_time: self.start_time,
+            deadline: self.deadline,
         }
     }
 }
