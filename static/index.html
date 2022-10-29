@@ -25,7 +25,8 @@ var config = {
 	onSnapEnd: onSnapEnd,
 	pieceTheme: 'static/themes/alpha/{piece}.png',
 }
-board = Chessboard('myBoard', config)
+
+var board = Chessboard('myBoard', config)
 
 window.addEventListener("resize", resize);
 resize()
@@ -80,10 +81,9 @@ function blueSquare (square) {
 }
 	
 var started = true
-var colour = false
+var colour = 'white'
 var player_id = String(Math.floor(Math.random() * (999999999999 - 100000000000) + 100000000000) )
 
-var board = null
 var game = new Chess()
 var $status = $('#status')
 var $fen = $('#fen')
