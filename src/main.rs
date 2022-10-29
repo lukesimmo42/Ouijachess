@@ -93,6 +93,7 @@ async fn handle_state(Path(game_id): Path<String>, Extension(shared_state): Exte
 }
 
 #[derive(Debug, Clone, Copy, Serialize)]
+#[serde(rename_all="lowercase")]
 enum Team {
     White,
     Black,
