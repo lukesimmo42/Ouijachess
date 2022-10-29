@@ -8,12 +8,30 @@
   <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css" integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU" crossorigin="anonymous">
 </head>
 <body>
+<div id="pbarcontainer" visibility = "hidden">
+<p>Time remaining to make move: <progress id="bar" visibility="hidden" display="none" value="0" max="1"><span>0</span>%</progress></p>
+</div>
 <div id="myBoard" style="width: window.innerWidth"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
 <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js" integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js" integrity="sha384-s3XgLpvmHyscVpijnseAmye819Ee3yaGa8NxstkJVyA6nuDFjt59u1QvuEl/mecz" crossorigin="anonymous"></script>
 <script>
+var timerOn = false
+var timer = 0
+var progb = document.getElementById("bar");
+var timerMax = 0
+progb.style.max = timerMax
+function count(){
+	if(timerOn && timer < timerMax){
+	timer = timer + 1000000;
+	progb.value = timer;
+	progb.getElementsByTagName("span")[0].textContent = timer;
+	}
+setTimeout("count()", 1000000);
+}
+count();
+
 // --- Begin Example JS --------------------------------------------------------
 var myBoard = document.getElementById("myBoard");
 	
@@ -30,17 +48,18 @@ var board = Chessboard('myBoard', config)
 
 window.addEventListener("resize", resize);
 resize()
-$(window).resize(board.resize)
 
 function resize(){
 	console.log(myBoard.style)
 	console.log(window.innerWidth < window.innerHeight)
 	if (window.innerWidth < window.innerHeight){
-		myBoard.style.width = window.innerWidth
+		myBoard.style.width = window.innerWidth - 20 + "px"
 	} else {
-		myBoard.style.width = window.innerHeight
+		console.log(window.innerHeight)
+		myBoard.style.width = window.innerHeight - 20 + "px"
 	}
 	console.log(myBoard.style)
+	board.resize()
 }
 	
 const evtSource = new EventSource("state", {} );
@@ -48,7 +67,37 @@ const evtSource = new EventSource("state", {} );
 evtSource.onmessage = (event) => {
 	console.log(event)
 	var data = JSON.parse(event.data)
-	receiveGame(data.fen, data.team)
+	fen = false
+	team = false
+	data = false
+	time = false
+	if (data.fen){
+		fen = data.fen
+	}
+	if (data.team){
+		team = data.team
+	}
+	if (data.deadline){
+		deadline = data.deadline
+	}
+	if (data.time){
+		time = data.time
+	}
+	receiveGame(fen, team, deadline, time)
+}
+
+function receiveGame(position, col = false, deadline = false, time = false){
+	game.load(position)
+	colour = col
+	if (colour == 'white'){
+		board.orientation('white')
+	} else {
+		board.orientation('black')
+	}
+	board.position(game.fen())
+	if (deadline && time){
+		timerMax = timerEnd - timerStart
+	}
 }
 
 var whiteSquareGrey = '#a9a9a9'
@@ -89,17 +138,6 @@ var $status = $('#status')
 var $fen = $('#fen')
 var $pgn = $('#pgn')
 
-function receiveGame(position, col = false){
-	game.load(position)
-	colour = col
-	if (colour == 'white'){
-		board.orientation('white')
-	} else {
-		board.orientation('black')
-	}
-	board.position(game.fen())
-}
-
 function sendMove(from, to){
 	console.log('send move')
 	var url = "move";
@@ -120,10 +158,12 @@ function onDragStart (source, piece, position, orientation) {
   if (game.game_over()) return false
 
   // only pick up pieces for the side to move
-  if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-      (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+	console.log(piece)
+  if ((colour == 'white' && game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+      (colour == 'black' && game.turn() === 'b' && piece.search(/^w/) !== -1)) {
     return false
   }
+	
 
 	var moves = game.moves({
     	square: source,
