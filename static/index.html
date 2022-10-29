@@ -70,7 +70,7 @@ evtSource.onmessage = (event) => {
 	fen = false
 	team = false
 	deadline = false
-	time = false
+	start_time = false
 	if (data.fen){
 		fen = data.fen
 	}
@@ -80,8 +80,8 @@ evtSource.onmessage = (event) => {
 	if (data.deadline){
 		deadline = data.deadline
 	}
-	if (data.time){
-		time = data.time
+	if (data.start_time){
+		start_time = data.time
 	}
 	receiveGame(fen, team, deadline, time)
 }
