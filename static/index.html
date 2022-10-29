@@ -18,7 +18,7 @@
 // NOTE: this example uses the chess.js library:
 // https://github.com/jhlywa/chess.js
 	
-const evtSource = new EventSource("../state", {} );
+const evtSource = new EventSource("state", {} );
 	
 evtSource.onmessage = (event) => {
 	console.log(event)
