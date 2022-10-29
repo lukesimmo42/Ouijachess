@@ -67,9 +67,11 @@ async fn main() {
     let _test_game = tokio::spawn(game_task(&"123", shared_state.clone()));
     // build our application with a single route
     let app = Router::new()
-        .route("/", get(|| async { "Hello, World!" }))
+        .route("/", get(handle_root))
+        .route("/start_game", post(handle_start))
         .route("/:id/state", get(handle_state))
         .route("/:id/move", post(handle_vote))
+        .route("/:id/qrcode.png", get(handle_qrcode))
         .nest("/:id/static", get(file_handler))
         .layer(Extension(shared_state));
 
@@ -78,6 +80,50 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
+}
+
+async fn handle_root() -> axum::response::Html<&'static str> {
+    axum::response::Html(r#"
+<!doctype html>
+<html>
+<head></head>
+<body>
+<form action="start_game" method="post">
+<button type="submit">Start Game</button>
+</form>
+</body>
+</html>
+    "#)
+}
+
+async fn handle_start(Extension(shared_state): Extension<Arc<Mutex<SharedState>>>) -> axum::response::Response {
+    let id: String = rand::thread_rng().sample_iter(rand::distributions::Alphanumeric).take(6).map(char::from).collect();
+    println!("Starting game with id {}", id);
+    let id_ = id.clone();
+    tokio::spawn(async move { game_task(&id_, shared_state.clone()).await });
+
+    let response = Response::builder()
+        .status(303)
+        .header("Location", format!("/{}/static/index.html", id))
+        .body(body::boxed(Body::from("")))
+        .unwrap();
+    response
+
+}
+
+async fn handle_qrcode(Path(game_id): Path<String>, Extension(shared_state): Extension<Arc<Mutex<SharedState>>>) -> axum::response::Response {
+    let png = qrcode_generator::to_png_to_vec(
+        format!("http://ouijachess.tech/{}/static/index.html", game_id), 
+        qrcode_generator::QrCodeEcc::Low,
+        1024
+    ).unwrap();
+    let response = Response::builder()
+        .status(200)
+        .header("Content-Type", "image/png")
+        .body(body::boxed(Body::from(png)))
+        .unwrap();
+
+    response
 }
 
 async fn handle_state(Path(game_id): Path<String>, Extension(shared_state): Extension<Arc<Mutex<SharedState>>>) -> Sse<impl Stream<Item=Result<Event, impl std::error::Error>>> {
