@@ -83,11 +83,9 @@ function sendMove(from, to){
 
 	//Send the proper header information along with the request
 	xhr.setRequestHeader("Content-type", "application/json");
-
-	let data = `{
-		"player_id": ` + player_id + `,
-		"mov": ` + from + to + `
-	}`;
+	mov = from + to
+	obj = {player_id: "string", mov: mov}
+	let data = JSON.stringify(obj);
 	console.log(data)
 	xhr.send(data);
 }
@@ -138,7 +136,7 @@ function onSnapEnd () {
 }
 
 function updateStatus () {
-	return(false)
+return(false)
   var status = ''
 
   var moveColor = 'White'
