@@ -31,8 +31,8 @@ use tower_http::services::ServeDir;
 
 use tokio::sync::Mutex;
 
-use tokio_stream::StreamExt as _ ;
-use futures::stream::{self, Stream};
+//use tokio_stream::StreamExt as _ ;
+use futures::stream::Stream;
 
 use serde::{
     Serialize,
@@ -55,17 +55,15 @@ use std::collections::{HashMap, HashSet};
 use std::collections::hash_map::Entry;
 use std::str::FromStr;
 use std::time::Duration;
-use std::convert::Infallible;
 
 #[tokio::main]
 async fn main() {
 
     let shared_state = Arc::new(Mutex::new(SharedState::default()));
-    let test_game = tokio::spawn(game_task(&"123", shared_state.clone()));
+    let _test_game = tokio::spawn(game_task(&"123", shared_state.clone()));
     // build our application with a single route
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
-        .route("/:id/play", get(handle_play))
         .route("/:id/state", get(handle_state))
         .route("/:id/move", post(handle_vote))
         .nest("/:id/static", get(file_handler))
@@ -78,22 +76,35 @@ async fn main() {
         .unwrap();
 }
 
-async fn handle_play(Path(game_id): Path<String>, Extension(shared_state): Extension<Arc<Mutex<SharedState>>>) {
-}
-
 async fn handle_state(Path(game_id): Path<String>, Extension(shared_state): Extension<Arc<Mutex<SharedState>>>) -> Sse<impl Stream<Item=Result<Event, impl std::error::Error>>> {
+    let team = Team::random();
     shared_state.lock().await.get_game(&game_id).unwrap().state_tx.send_modify(|state| state.player_count += 1);
     let mut state_rx = shared_state.lock().await.get_game(&game_id).unwrap().state_rx.clone();
     let stream = async_stream::stream!{
-        let data = state_rx.borrow().state_update();
+        let data = state_rx.borrow().state_update(team);
         yield Event::default().json_data(data);
         while let Ok(_) = state_rx.changed().await {
-            let data = state_rx.borrow().state_update();
+            let data = state_rx.borrow().state_update(team);
             yield Event::default().json_data(data);
         }
     };
 
     Sse::new(stream).keep_alive(KeepAlive::default())
+}
+
+#[derive(Debug, Clone, Copy, Serialize)]
+enum Team {
+    White,
+    Black,
+}
+
+impl Team {
+    fn random() -> Team {
+        match rand::thread_rng().gen_range(0..2) {
+            0 => Team::White,
+            _ => Team::Black,
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -106,6 +117,7 @@ struct VoteRequest {
 struct StateUpdate {
     fen: String,
     votes: u32,
+    team: Team,
 }
 
 async fn handle_vote(Path(game_id): Path<String>, extract::Json(payload): extract::Json<VoteRequest>, Extension(shared_state): Extension<Arc<Mutex<SharedState>>>) {
@@ -195,7 +207,10 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
                 .iter()
                 .max_by_key(|(_,votes)| *votes)
                 .map(|(m,_)| *m)
-                .unwrap_or_else(|| pick_random_move(&state_rx.borrow().board));
+                .unwrap_or_else(|| {
+                    println!("Game {}: No move was chosen. Will pick a random one.", game_id);
+                    pick_random_move(&state_rx.borrow().board)
+                });
 
             let board_ = state_rx.borrow().board.make_move_new(chosen_move);
 
@@ -203,6 +218,9 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
                 game.state_tx.send_modify(|state| state.status = GameStatus::Over);
                 break;
             }
+
+            game.voted.clear();
+            game.moves.clear();
 
             game.state_tx.send_modify(|state| state.board = board_);
         }
@@ -241,10 +259,11 @@ struct SharedState {
 }
 
 impl GameState {
-    fn state_update(&self) -> StateUpdate {
+    fn state_update(&self, team: Team) -> StateUpdate {
         StateUpdate {
             fen: format!("{}", self.board),
             votes: self.vote_count,
+            team,
         }
     }
 }
@@ -269,7 +288,7 @@ async fn get_static_file(uri: Uri) -> Result<Response<BoxBody>, (StatusCode, Str
     }
 }
 
-pub async fn file_handler(Path(game_id): Path<String>, uri: Uri) -> Result<Response<BoxBody>, (StatusCode, String)> {
+pub async fn file_handler(Path(_): Path<String>, uri: Uri) -> Result<Response<BoxBody>, (StatusCode, String)> {
     let res = get_static_file(uri.clone()).await?;
 
     if res.status() == StatusCode::NOT_FOUND {
