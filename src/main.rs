@@ -163,7 +163,7 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
 
     println!("Game {} created. waiting for players to join", game_id);
 
-    let players_required = 2;
+    let players_required = 1;
     // Wait for enough players to join
     loop {
         let result = state_rx.changed().await;
@@ -172,13 +172,12 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
             panic!("Failed waiting for players to connect");
         }
         let player_count = state_rx.borrow().player_count;
-        println!("{} players connected", player_count);
+        println!("{}/{} players connected", player_count, players_required);
         
-        if player_count > players_required {
+        if player_count >= players_required {
             break;
         }
     }
-
 
     shared_state.lock().await.get_game(&game_id).unwrap().state_tx.send_modify(|state| state.status = GameStatus::Ongoing);
 
