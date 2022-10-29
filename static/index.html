@@ -24,6 +24,7 @@ function resize(){
 	var newWidth = Math.min(window.innerWidth, window.innerHeight)
 	console.log(newWidth)
 	myBoard.style["width"] = newWidth
+	console.log(myBoard.style["width"])
 }
 	
 const evtSource = new EventSource("state", {} );
@@ -65,7 +66,7 @@ function blueSquare (square) {
 	
 var started = true
 var colour = false
-var player_id = Math.floor(Math.random() * (999999999999 - 100000000000) + 100000000000)
+var player_id = String(Math.floor(Math.random() * (999999999999 - 100000000000) + 100000000000) )
 
 var board = null
 var game = new Chess()
