@@ -1,0 +1,18 @@
+[package]
+name = "oijachess"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = "0.5.*"
+tokio = { version = "1.0", features = ["full"] }
+tower = { version = "0.4", features = ["util"] }
+tower-http = { version = "0.3.4", features = ["fs"] }
+serde = { version = "1.0", features = ["derive"] }
+chess = "3.2"
+rand = "0.8.5"
+futures = "0.3"
+tokio-stream = "0.1.11"
+async-stream = "0.3"
