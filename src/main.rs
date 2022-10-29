@@ -125,6 +125,7 @@ struct StateUpdate {
     team: Team,
     start_time: Option<DeadlineTime>,
     deadline: Option<DeadlineTime>,
+    status: GameStatus,
 }
 
 async fn handle_vote(Path(game_id): Path<String>, extract::Json(payload): extract::Json<VoteRequest>, Extension(shared_state): Extension<Arc<Mutex<SharedState>>>) {
@@ -231,8 +232,20 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
             let board_ = state_rx.borrow().board.make_move_new(chosen_move);
 
             if board_.status() != BoardStatus::Ongoing {
+                let status = match board_.status() {
+                    BoardStatus::Checkmate => {
+                        match board_.side_to_move() {
+                            chess::Color::White => GameStatus::BlackWin,
+                            chess::Color::Black => GameStatus::WhiteWin,
+                        }
+                    },
+                    BoardStatus::Stalemate => {
+                        GameStatus::Draw
+                    }
+                    BoardStatus::Ongoing => unreachable!(),
+                };
                 game.state_tx.send_modify(|state| {
-                    state.status = GameStatus::Over;
+                    state.status = status;
                     state.deadline = None;
                 });
                 break;
@@ -254,10 +267,14 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
 
 }
 
+#[derive(Serialize, Clone, Copy)]
+#[serde(rename_all = "snake_case")]
 enum GameStatus {
     Waiting,
     Ongoing,
-    Over,
+    WhiteWin,
+    BlackWin,
+    Draw,
 }
 
 struct GameState {
@@ -295,6 +312,7 @@ impl GameState {
             team,
             start_time: self.start_time,
             deadline: self.deadline,
+            status: self.status,
         }
     }
 }
