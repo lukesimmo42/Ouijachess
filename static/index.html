@@ -18,7 +18,7 @@
 // NOTE: this example uses the chess.js library:
 // https://github.com/jhlywa/chess.js
 	
-const evtSource = new EventSource("http://ouijachess.tech:3000/123/state", {} );
+const evtSource = new EventSource("../state", {} );
 	
 evtSource.onmessage = (event) => {
 	console.log(event)
@@ -82,7 +82,7 @@ function sendMove(from, to){
 	xhr.open("POST", url, true);
 
 	//Send the proper header information along with the request
-	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+	xhr.setRequestHeader("Content-type", "application/json");
 
 	let data = `{
 		"player_id": ` + player_id + `,
@@ -177,7 +177,7 @@ var config = {
 	onDragStart: onDragStart,
 	onDrop: onDrop,
 	onSnapEnd: onSnapEnd,
-	pieceTheme: 'themes/alpha/{piece}.png',
+	pieceTheme: 'static/themes/alpha/{piece}.png',
 }
 board = Chessboard('myBoard', config)
 
