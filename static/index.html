@@ -96,7 +96,12 @@ function receiveGame(position, col = false, deadline = false, time = false){
 	}
 	board.position(game.fen())
 	if (deadline && time){
-		timerMax = timerEnd - timerStart
+		deadline = deadline.secs_since_epoch*1000000000 + deadline.nanos_since_epoch
+		time = time.secs_since_epoch*1000000000 + time.nanos_since_epoch
+		timerMax = deadline-time
+		timerOn = True
+		date = new Date().getTime()
+		timer = date * 1000 - time
 	}
 }
 
