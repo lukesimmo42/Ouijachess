@@ -18,7 +18,7 @@
 myBoard = document.getElementById("myBoard");
 myBoard.style["width"] = "window.innerWidth"
 	
-const evtSource = new EventSource("../state", {} );
+const evtSource = new EventSource("state", {} );
 	
 evtSource.onmessage = (event) => {
 	console.log(event)
