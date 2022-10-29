@@ -92,7 +92,7 @@ var $pgn = $('#pgn')
 function receiveGame(position, col = false){
 	game.load(position)
 	colour = col
-	if (colour = 'White'){
+	if (colour == 'white'){
 		board.orientation('white')
 	} else {
 		board.orientation('black')
@@ -141,6 +141,10 @@ function onDragStart (source, piece, position, orientation) {
 
 function onDrop (source, target) {
  	removeGreySquares()
+	console.log(game.get(source).color)
+	if (game.get(source).color != colour.charAt(0)){
+		return 'snapback'
+	}
 	var moves = game.moves({ verbose: true })
 	for (i in moves){
 		var move = moves[i]
