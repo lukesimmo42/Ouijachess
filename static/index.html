@@ -15,16 +15,31 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js" integrity="sha384-s3XgLpvmHyscVpijnseAmye819Ee3yaGa8NxstkJVyA6nuDFjt59u1QvuEl/mecz" crossorigin="anonymous"></script>
 <script>
 // --- Begin Example JS --------------------------------------------------------
-myBoard = document.getElementById("myBoard");
-myBoard.style["width"] = Math.min(window.innerWidth, window.innerHeight)
+var myBoard = document.getElementById("myBoard");
+	
+var config = {
+	draggable: true,
+	position: 'start',
+	onDragStart: onDragStart,
+	onDrop: onDrop,
+	onSnapEnd: onSnapEnd,
+	pieceTheme: 'static/themes/alpha/{piece}.png',
+}
+board = Chessboard('myBoard', config)
+
 window.addEventListener("resize", resize);
+resize()
+$(window).resize(board.resize)
 
 function resize(){
-	console.log("resize")
-	var newWidth = Math.min(window.innerWidth, window.innerHeight)
-	console.log(newWidth)
-	myBoard.style["width"] = newWidth
-	console.log(myBoard.style["width"])
+	console.log(myBoard.style)
+	console.log(window.innerWidth < window.innerHeight)
+	if (window.innerWidth < window.innerHeight){
+		myBoard.style.width = window.innerWidth
+	} else {
+		myBoard.style.width = window.innerHeight
+	}
+	console.log(myBoard.style)
 }
 	
 const evtSource = new EventSource("state", {} );
@@ -32,7 +47,7 @@ const evtSource = new EventSource("state", {} );
 evtSource.onmessage = (event) => {
 	console.log(event)
 	var data = JSON.parse(event.data)
-	receiveGame(data.fen)
+	receiveGame(data.fen, data.team)
 }
 
 var whiteSquareGrey = '#a9a9a9'
@@ -74,10 +89,10 @@ var $status = $('#status')
 var $fen = $('#fen')
 var $pgn = $('#pgn')
 
-function receiveGame(position, colour = false){
+function receiveGame(position, col = false){
 	game.load(position)
-	colour = colour
-	if (colour = 'white'){
+	colour = col
+	if (colour = 'White'){
 		board.orientation('white')
 	} else {
 		board.orientation('black')
@@ -178,16 +193,6 @@ return(false)
   $fen.html(game.fen())
   $pgn.html(game.pgn())
 }
-
-var config = {
-	draggable: true,
-	position: 'start',
-	onDragStart: onDragStart,
-	onDrop: onDrop,
-	onSnapEnd: onSnapEnd,
-	pieceTheme: 'static/themes/alpha/{piece}.png',
-}
-board = Chessboard('myBoard', config)
 
 updateStatus()
 // --- End Example JS ----------------------------------------------------------
