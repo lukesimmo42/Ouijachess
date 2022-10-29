@@ -82,6 +82,7 @@ async fn handle_play(Path(game_id): Path<String>, Extension(shared_state): Exten
 }
 
 async fn handle_state(Path(game_id): Path<String>, Extension(shared_state): Extension<Arc<Mutex<SharedState>>>) -> Sse<impl Stream<Item=Result<Event, impl std::error::Error>>> {
+    shared_state.lock().await.get_game(&game_id).unwrap().state_tx.send_modify(|state| state.player_count += 1);
     let mut state_rx = shared_state.lock().await.get_game(&game_id).unwrap().state_rx.clone();
     let stream = async_stream::stream!{
         let data = state_rx.borrow().state_update();
@@ -138,6 +139,8 @@ fn pick_random_move(board: &Board) -> ChessMove {
 
 async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
 
+    println!("Task launch for game {}", game_id);
+
 
     let game_state = GameState {
         vote_count: 0,
@@ -158,6 +161,7 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
 
     shared_state.lock().await.games.insert(game_id.to_string(), game);
 
+    println!("Game {} created. waiting for players to join", game_id);
 
     let players_required = 2;
     // Wait for enough players to join
@@ -175,7 +179,10 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
         }
     }
 
+
     shared_state.lock().await.get_game(&game_id).unwrap().state_tx.send_modify(|state| state.status = GameStatus::Ongoing);
+
+    println!("Game {} started", game_id);
 
     // Start game
     let move_time = Duration::from_secs(10);
