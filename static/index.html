@@ -17,14 +17,26 @@
 <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js" integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js" integrity="sha384-s3XgLpvmHyscVpijnseAmye819Ee3yaGa8NxstkJVyA6nuDFjt59u1QvuEl/mecz" crossorigin="anonymous"></script>
 <script>
+function preventDefault(e) {
+  e.preventDefault();
+}
+var supportsPassive = false;
+try {
+  window.addEventListener("test", null, Object.defineProperty({}, 'passive', {
+    get: function () { supportsPassive = true; } 
+  }));
+} catch(e) {}
+var wheelOpt = supportsPassive ? { passive: false } : false;
+window.addEventListener('touchmove', preventDefault, wheelOpt);
 var timerOn = false
 var timer = 0
+var timerMax
 var progb = document.getElementById("bar");
-var timerMax = 0
-progb.style.max = timerMax
 function count(){
-	if(timerOn && timer < timerMax){
-	timer = timer + 100;
+	if(timerOn && timer < 1){
+	console.log(timer)
+	timer = timer + (100/timerMax);
+	console.log(timer)
 	progb.value = timer;
 	progb.getElementsByTagName("span")[0].textContent = timer;
 	}
@@ -45,6 +57,14 @@ var config = {
 }
 
 var board = Chessboard('myBoard', config)
+var started = true
+var colour = 'white'
+var player_id = String(Math.floor(Math.random() * (999999999999 - 100000000000) + 100000000000) )
+
+var game = new Chess()
+var $status = $('#status')
+var $fen = $('#fen')
+var $pgn = $('#pgn')
 
 window.addEventListener("resize", resize);
 resize()
@@ -67,6 +87,10 @@ const evtSource = new EventSource("state", {} );
 evtSource.onmessage = (event) => {
 	console.log(event)
 	var data = JSON.parse(event.data)
+	handleEventData(data)
+}
+
+function handleEventData(data){
 	fen = false
 	team = false
 	deadline = false
@@ -95,17 +119,21 @@ function receiveGame(position, col = false, deadline = false, time = false){
 		board.orientation('black')
 	}
 	board.position(game.fen())
-	console.log(deadline)
-	console.log(time)
 	if (deadline && time){
 		deadline = deadline.secs_since_epoch*1000 + (deadline.nanos_since_epoch/1000000)
 		time = time.secs_since_epoch*1000 + (time.nanos_since_epoch/1000000)
 		timerMax = deadline-time
 		timerOn = true
 		date = new Date().getTime()
-		timer = date * 1000 - time
+		timer = (date - time)/timerMax
+		timer = 0
 	}
 }
+	
+json_string = `{"fen":"r1bqkb1r/pppppppp/7n/n7/P4P2/2P1P3/1P1P2PP/RNBQKBNR b KQkq - 0 1","votes":0,"team":"white","start_time":{"secs_since_epoch":1667078294,"nanos_since_epoch":44404235},"deadline":{"secs_since_epoch":1667078304,"nanos_since_epoch":44404235}}`
+json = JSON.parse(json_string)
+handleEventData(json)
+
 
 var whiteSquareGrey = '#a9a9a9'
 var blackSquareGrey = '#696969'
@@ -135,15 +163,6 @@ function blueSquare (square) {
 
   $square.css('background', background)
 }
-	
-var started = true
-var colour = 'white'
-var player_id = String(Math.floor(Math.random() * (999999999999 - 100000000000) + 100000000000) )
-
-var game = new Chess()
-var $status = $('#status')
-var $fen = $('#fen')
-var $pgn = $('#pgn')
 
 function sendMove(from, to){
 	console.log('send move')
