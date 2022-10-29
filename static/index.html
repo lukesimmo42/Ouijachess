@@ -86,7 +86,7 @@ function receiveGame(position, colour = false){
 
 function sendMove(from, to){
 	console.log('send move')
-	var url = "http://ouijachess.tech:3000/123/move";
+	var url = "move";
 	var xhr = new XMLHttpRequest();
 	xhr.open("POST", url, true);
 
