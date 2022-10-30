@@ -80,7 +80,6 @@ function handleEventData(data){
 
 function receiveGame(position, col = false, deadline = false, time = false, status = false){
 	game.load(position)
-	
 	colour = col
 	if (colour == 'white'){
 		board.orientation('white')
@@ -122,11 +121,6 @@ function receiveGame(position, col = false, deadline = false, time = false, stat
 		timer = (date - time)/timerMax
 	}
 }
-	
-json_string = `{"fen":"r1bqkb1r/pppppppp/7n/n7/P4P2/2P1P3/1P1P2PP/RNBQKBNR b KQkq - 0 1","votes":0,"team":"white","start_time":{"secs_since_epoch":1667078294,"nanos_since_epoch":44404235},"deadline":{"secs_since_epoch":1667078304,"nanos_since_epoch":44404235}}`
-json = JSON.parse(json_string)
-handleEventData(json)
-
 
 var whiteSquareGrey = '#a9a9a9'
 var blackSquareGrey = '#696969'
@@ -222,40 +216,4 @@ function onSnapEnd () {
   //board.position(game.fen())
 	
 }
-
-function updateStatus () {
-return(false)
-  var status = ''
-
-  var moveColor = 'White'
-  if (game.turn() === 'b') {
-    moveColor = 'Black'
-  }
-
-  // checkmate?
-  if (game.in_checkmate()) {
-    status = 'Game over, ' + moveColor + ' is in checkmate.'
-  }
-
-  // draw?
-  else if (game.in_draw()) {
-    status = 'Game over, drawn position'
-  }
-
-  // game still on
-  else {
-    status = moveColor + ' to move'
-
-    // check?
-    if (game.in_check()) {
-      status += ', ' + moveColor + ' is in check'
-    }
-  }
-
-  $status.html(status)
-  $fen.html(game.fen())
-  $pgn.html(game.pgn())
-}
-
-updateStatus()
 // --- End Example JS ----------------------------------------------------------
