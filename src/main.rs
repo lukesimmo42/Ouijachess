@@ -244,7 +244,7 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
 
     println!("Game {} created. waiting for players to join", game_id);
 
-    let players_required = 1;
+    let players_required = 3;
     // Wait for enough players to join
     loop {
         let result = state_rx.changed().await;
