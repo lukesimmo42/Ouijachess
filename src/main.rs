@@ -76,8 +76,7 @@ async fn main() {
         .nest("/:id/static", get(file_handler))
         .layer(Extension(shared_state));
 
-    // run it with hyper on localhost:3000
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
+    axum::Server::bind(&"0.0.0.0:80".parse().unwrap())
         .serve(app.into_make_service())
         .await
         .unwrap();
