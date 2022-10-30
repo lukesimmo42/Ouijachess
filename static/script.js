@@ -177,8 +177,8 @@ function onDragStart (source, piece, position, orientation) {
 
   // only pick up pieces for the side to move
 	console.log(piece)
-  if ((colour == 'white' && piece.search(/^b/) !== -1) ||
-      (colour == 'black' && piece.search(/^w/) !== -1)) {
+  if ((colour == 'white' && piece.search(/^w/) !== -1) ||
+      (colour == 'black' && piece.search(/^b/) !== -1)) {
     return false
   }
 if ((colour == "white" && game.turn() === 'b' ) ||
