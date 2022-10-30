@@ -199,13 +199,17 @@ if ((colour == "white" && game.turn() === 'b' ) ||
 
 function onDrop (source, target) {
  	removeGreySquares()
-	console.log(game.get(source).color)
 	if (!game){
 		return 'snapback'
 	}
 	if (game.get(source).color != colour.charAt(0)){
 		return 'snapback'
 	}
+	if ((colour == "white" && game.turn() === 'b' ) ||
+   (colour == 'black' && game.turn() === 'w' ))
+{
+	return "snapback"
+}
 	var moves = game.moves({ verbose: true })
 	for (i in moves){
 		var move = moves[i]
