@@ -67,7 +67,8 @@ async fn main() {
     let _test_game = tokio::spawn(game_task(&"123", shared_state.clone()));
     // build our application with a single route
     let app = Router::new()
-        .route("/", get(handle_root))
+        .route("/", get(|| { async { "Hello world" }})
+        .route("/newgame", get(handle_root))
         .route("/start_game", post(handle_start))
         .route("/:id/state", get(handle_state))
         .route("/:id/move", post(handle_vote))
@@ -104,7 +105,7 @@ async fn handle_start(Extension(shared_state): Extension<Arc<Mutex<SharedState>>
 
     let response = Response::builder()
         .status(303)
-        .header("Location", format!("/{}/static/index.html", id))
+        .header("Location", format!("/{}/static/spectate.html", id))
         .body(body::boxed(Body::from("")))
         .unwrap();
     response
@@ -247,7 +248,7 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
         }
     }
 
-    let move_time = Duration::from_secs(10);
+    let move_time = Duration::from_secs(2);
 
     let start_time = DeadlineTime::now();
     let deadline = start_time + move_time;
