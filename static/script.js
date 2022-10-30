@@ -91,21 +91,27 @@ function receiveGame(position, col = false, deadline = false, time = false, stat
 	switch(status){
 		case false:
 			console.log("no status")
+			break;
 		case "waiting":
 			overlayOn("Waiting for players")
 			timerOn = false
+			break;
 		case "ongoing":
 			overlayOff()
 			timerOn=true
+			break;
 		case "white_win":
 			overlayOn("White wins!")
 			timerOn = false
+			break;
 		case "black_win":
 			overlayOn("black wins!")
 			timerOn = false
+			break;
 		case "draw":
 			overlayOn("Draw")
 			timerOn = false
+			break;
 	}
 	if (deadline && time){
 		deadline = deadline.secs_since_epoch*1000 + (deadline.nanos_since_epoch/1000000)
