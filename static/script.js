@@ -33,7 +33,7 @@ var config = {
 	onDragStart: onDragStart,
 	onDrop: onDrop,
 	onSnapEnd: onSnapEnd,
-	pieceTheme: 'static/themes/ouija/{piece}.png',
+	pieceTheme: 'static/themes/alpha/{piece}.png',
 }
 
 var board = Chessboard('myBoard', config)
