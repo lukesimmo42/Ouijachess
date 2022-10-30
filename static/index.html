@@ -6,18 +6,45 @@
   <title>Ouija Chess</title>
   <base href="../" />
   <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css" integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU" crossorigin="anonymous">
+<style>
+#overlay {
+  position: fixed;
+  display: none;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  z-index: 2;
+  cursor: pointer;
+}
+
+#text{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: 50px;
+  color: white;
+  transform: translate(-50%,-50%);
+  -ms-transform: translate(-50%,-50%);
+}
+</style>
 </head>
 <body>
-<div id="progbarcontainer">
-<p>Time remaining to make move: <progress id="bar" value="0" max="1"><span>0</span>%</progress></p>
+<div id="overlay">
+  <div id="text">Overlay Text</div>
 </div>
-<div id="myBoard" style="width:window.innerWidth"></div>
+<div id="progbarcontainer">
+<p style="margin-bottom:10px;margin-top:0px;font-size:36px">Time remaining to make move: <progress id="bar" value="0" max="1"><span>0</span>%</progress></p>
+</div>
+<div id="myBoard" style="height:90%;width:100%"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
 <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js" integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js" integrity="sha384-s3XgLpvmHyscVpijnseAmye819Ee3yaGa8NxstkJVyA6nuDFjt59u1QvuEl/mecz" crossorigin="anonymous"></script>
 <script src="./static/script.js"></script>
 <script>
-	
 var progb = document.getElementById("bar");
 var progbarcontainer = document.getElementById("progbarcontainer")
 var myBoard = document.getElementById("myBoard");
@@ -25,11 +52,20 @@ window.addEventListener("resize", resize);
 resize()
 function resize(){
 	if (window.innerWidth < window.innerHeight){
-		myBoard.style.width = window.innerWidth - 20 + "px"
+		myBoard.style.width = window.innerWidth+"px"
 	} else {
-		myBoard.style.width = window.innerHeight - progbarcontainer.style.height - 20 + "px"
+		myBoard.style.width = window.innerHeight *9/10 + "px"
 	}
 	board.resize()
+}
+var overlay = document.getElementById("overlay")
+var overlayText = document.getElementById("text")
+function overlayOn(text){
+	overlayText.innerText = text;
+	overlay.style.display = "block";
+}
+function overlayOff() {
+ 	overlay.style.display = "none";
 }
 </script>
 </body>

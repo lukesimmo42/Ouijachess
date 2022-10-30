@@ -33,7 +33,7 @@ var config = {
 	onDragStart: onDragStart,
 	onDrop: onDrop,
 	onSnapEnd: onSnapEnd,
-	pieceTheme: 'static/themes/alpha/{piece}.png',
+	pieceTheme: 'static/themes/ouija/{piece}.png',
 }
 
 var board = Chessboard('myBoard', config)
@@ -46,7 +46,7 @@ var $status = $('#status')
 var $fen = $('#fen')
 var $pgn = $('#pgn')
 	
-const evtSource = new EventSource("state", {} );
+var evtSource = new EventSource("state", {} );
 	
 evtSource.onmessage = (event) => {
 	console.log(event)
@@ -59,6 +59,7 @@ function handleEventData(data){
 	team = false
 	deadline = false
 	start_time = false
+	status = false
 	if (data.fen){
 		fen = data.fen
 	}
@@ -71,11 +72,15 @@ function handleEventData(data){
 	if (data.start_time){
 		start_time = data.start_time
 	}
-	receiveGame(fen, team, deadline, start_time)
+	if (data.status){
+		status = data.status
+	}
+	receiveGame(fen, team, deadline, start_time, status)
 }
 
-function receiveGame(position, col = false, deadline = false, time = false){
+function receiveGame(position, col = false, deadline = false, time = false, status = false){
 	game.load(position)
+	
 	colour = col
 	if (colour == 'white'){
 		board.orientation('white')
@@ -83,6 +88,25 @@ function receiveGame(position, col = false, deadline = false, time = false){
 		board.orientation('black')
 	}
 	board.position(game.fen())
+	switch(status){
+		case false:
+			console.log("no status")
+		case "waiting":
+			overlayOn("Waiting for players")
+			timerOn = false
+		case "ongoing":
+			overlayOff()
+			timerOn=true
+		case "white_win":
+			overlayOn("White wins!")
+			timerOn = false
+		case "black_win":
+			overlayOn("black wins!")
+			timerOn = false
+		case "draw":
+			overlayOn("Draw")
+			timerOn = false
+	}
 	if (deadline && time){
 		deadline = deadline.secs_since_epoch*1000 + (deadline.nanos_since_epoch/1000000)
 		time = time.secs_since_epoch*1000 + (time.nanos_since_epoch/1000000)
