@@ -17,6 +17,7 @@ var progbarcontainer = document.getElementById("progbarcontainer")
 var myBoard = document.getElementById("myBoard");
 function count(){
 	console.log("count")
+	console.log(timerOn)
 	if(timerOn && timer < 1){
 		console.log("timer is on and timer<1")
 	console.log(timer)
