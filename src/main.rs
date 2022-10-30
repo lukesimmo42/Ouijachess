@@ -308,6 +308,7 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
                 game.state_tx.send_modify(|state| {
                     state.status = status;
                     state.deadline = None;
+                    state.board = board_;
                 });
                 break;
             }
