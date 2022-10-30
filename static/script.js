@@ -202,6 +202,9 @@ function onDrop (source, target) {
 	if (!game){
 		return 'snapback'
 	}
+	if (!game.get(source)){
+		return 'snapback'
+	}
 	if (game.get(source).color != colour.charAt(0)){
 		return 'snapback'
 	}
