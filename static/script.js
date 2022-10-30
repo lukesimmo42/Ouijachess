@@ -167,6 +167,7 @@ function sendMove(from, to){
 }
 
 function onDragStart (source, piece, position, orientation) {
+	console.log("dragstart")
   // do not pick up pieces if the game is over
   if (game.game_over()) return false
 
@@ -195,6 +196,9 @@ function onDragStart (source, piece, position, orientation) {
 function onDrop (source, target) {
  	removeGreySquares()
 	console.log(game.get(source).color)
+	if (!game){
+		return 'snapback'
+	}
 	if (game.get(source).color != colour.charAt(0)){
 		return 'snapback'
 	}
