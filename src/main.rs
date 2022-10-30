@@ -302,6 +302,9 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
                     }
                     BoardStatus::Ongoing => unreachable!(),
                 };
+
+                println!("Game {} complete. Result={:?}", game_id, status);
+
                 game.state_tx.send_modify(|state| {
                     state.status = status;
                     state.deadline = None;
@@ -325,7 +328,7 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
 
 }
 
-#[derive(Serialize, Clone, Copy)]
+#[derive(Serialize, Clone, Copy, Debug)]
 #[serde(rename_all = "snake_case")]
 enum GameStatus {
     Waiting,
