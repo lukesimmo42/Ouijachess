@@ -16,13 +16,8 @@ var progb = document.getElementById("bar");
 var progbarcontainer = document.getElementById("progbarcontainer")
 var myBoard = document.getElementById("myBoard");
 function count(){
-	console.log("count")
-	console.log(timerOn)
 	if(timerOn && timer < 1){
-		console.log("timer is on and timer<1")
-	console.log(timer)
 	timer = timer + (100/timerMax);
-	console.log(timer)
 	progb.value = timer;
 	progb.getElementsByTagName("span")[0].textContent = timer;
 	}
@@ -177,8 +172,8 @@ function onDragStart (source, piece, position, orientation) {
 
   // only pick up pieces for the side to move
 	console.log(piece)
-  if ((colour == 'white' && piece.search(/^w/) !== -1) ||
-      (colour == 'black' && piece.search(/^b/) !== -1)) {
+  if ((colour == 'white' && piece.search(/^w/) === -1) ||
+      (colour == 'black' && piece.search(/^b/) === -1)) {
     return false
   }
 if ((colour == "white" && game.turn() === 'b' ) ||
