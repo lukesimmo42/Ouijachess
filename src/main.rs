@@ -46,8 +46,6 @@ use chess::{
     MoveGen,
 };
 
-use time::OffsetDateTime;
-
 use tokio::sync::watch;
 
 use rand::prelude::*;
@@ -58,7 +56,7 @@ use std::collections::hash_map::Entry;
 use std::str::FromStr;
 use std::time::Duration;
 
-type DeadlineTime = std::time::SystemTime;//OffsetDateTime;
+type DeadlineTime = std::time::SystemTime;
 
 #[tokio::main]
 async fn main() {
@@ -67,7 +65,8 @@ async fn main() {
     let _test_game = tokio::spawn(game_task(&"123", shared_state.clone()));
     // build our application with a single route
     let app = Router::new()
-        .route("/", get(handle_root))
+        .route("/", get(|| { async { "Hello world" }}))
+        .route("/newgame", get(handle_root))
         .route("/start_game", post(handle_start))
         .route("/:id/state", get(handle_state))
         .route("/:id/move", post(handle_vote))
@@ -75,8 +74,7 @@ async fn main() {
         .nest("/:id/static", get(file_handler))
         .layer(Extension(shared_state));
 
-    // run it with hyper on localhost:3000
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
+    axum::Server::bind(&"0.0.0.0:80".parse().unwrap())
         .serve(app.into_make_service())
         .await
         .unwrap();
@@ -104,14 +102,14 @@ async fn handle_start(Extension(shared_state): Extension<Arc<Mutex<SharedState>>
 
     let response = Response::builder()
         .status(303)
-        .header("Location", format!("/{}/static/index.html", id))
+        .header("Location", format!("/{}/static/spectate.html", id))
         .body(body::boxed(Body::from("")))
         .unwrap();
     response
 
 }
 
-async fn handle_qrcode(Path(game_id): Path<String>, Extension(shared_state): Extension<Arc<Mutex<SharedState>>>) -> axum::response::Response {
+async fn handle_qrcode(Path(game_id): Path<String>) -> axum::response::Response {
     let png = qrcode_generator::to_png_to_vec(
         format!("http://ouijachess.tech/{}/static/index.html", game_id), 
         qrcode_generator::QrCodeEcc::Low,
@@ -247,7 +245,7 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
         }
     }
 
-    let move_time = Duration::from_secs(10);
+    let move_time = Duration::from_secs(2);
 
     let start_time = DeadlineTime::now();
     let deadline = start_time + move_time;
