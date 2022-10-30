@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <title>Ouija Chess</title>
+  <base href="../" />
+  <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css" integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU" crossorigin="anonymous">
+<style type="text/css">
+html {
+   overflow: hidden;
+}
+</style>
+
+</head>
+<body>	
+<div id="progbarcontainer" style="height:10%">
+<p>Time remaining to make move: <progress id="bar" value="0" max="1"><span>0</span>%</progress></p>
+</div>
+<div id="container" style="width:100%;height:90vh">
+	<div id = "boardcontainer" style="vertical-align:middle;display:inline-block;height:100%;width:59%;">
+		<div id="myBoard" style="width:100%;height:100%"></div>
+	</div>
+	<div id="qrcontainer" style="vertical-align:middle;display:inline-block;height:100%;width:39%;">
+		<img id = "qrimg" src="./static/qr.jpg" alt="QR Code" style="width:100%">
+	</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+<script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js" integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js" integrity="sha384-s3XgLpvmHyscVpijnseAmye819Ee3yaGa8NxstkJVyA6nuDFjt59u1QvuEl/mecz" crossorigin="anonymous"></script>
+<script src="./static/script.js"></script>
+<script>
+
+var container = document.getElementById("container")
+var progb = document.getElementById("bar");
+var progbarcontainer = document.getElementById("progbarcontainer")
+var boardcontainer = document.getElementById("boardcontainer")
+var myBoard = document.getElementById("myBoard");
+var qrcontainer = document.getElementById("qrcontainer")
+var qrimg = document.getElementById("qrimg")
+window.addEventListener("resize", resize);
+resize()
+function isToWide(element){
+	console.log("istowide")
+	console.log(element.id)
+	console.log(element.clientWidth)
+	console.log(window.innerHeight*9/10)
+	window.innerHeight
+	if (element.clientWidth>window.innerHeight*9/10){
+		return true
+	} else {
+		return false
+	}
+}
+function makeNarrow(element){
+	console.log("make narrow")
+	console.log(element.id)
+	element.style.width=window.innerHeight*9/10+"px"
+}
+function makeWide(element){
+	element.style.width = "100%"
+}
+function resize(){
+	//return true
+	if (isToWide(qrcontainer)){
+		makeNarrow(qrimg)
+	} else {
+		makeWide(qrimg)
+	}
+	if (isToWide(boardcontainer)){
+		makeNarrow(myBoard)
+	} else {
+		makeWide(myBoard)
+	}
+	board.resize()
+}
+</script>
+</body>
+</html>
