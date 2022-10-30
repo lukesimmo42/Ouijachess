@@ -182,7 +182,7 @@ function onDragStart (source, piece, position, orientation) {
     return false
   }
 if ((colour == "white" && game.turn() === 'b' ) ||
-   (colour == 'black' && && game.turn() === 'w' ))
+   (colour == 'black' && game.turn() === 'w' ))
 {
 	return false
 }
