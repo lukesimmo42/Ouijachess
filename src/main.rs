@@ -71,7 +71,7 @@ async fn main() {
         .route("/:id/state", get(handle_state))
         .route("/:id/move", post(handle_vote))
         .route("/:id/qrcode.png", get(handle_qrcode))
-        .nest("/:id/static", get(file_handler))
+        .nest("/:id/static", get(handle_static))
         .layer(Extension(shared_state));
 
     axum::Server::bind(&"0.0.0.0:80".parse().unwrap())
@@ -124,10 +124,14 @@ async fn handle_qrcode(Path(game_id): Path<String>) -> axum::response::Response 
     response
 }
 
-async fn handle_state(Path(game_id): Path<String>, Extension(shared_state): Extension<Arc<Mutex<SharedState>>>) -> Sse<impl Stream<Item=Result<Event, impl std::error::Error>>> {
+async fn handle_state(Path(game_id): Path<String>, Extension(shared_state): Extension<Arc<Mutex<SharedState>>>) -> Result<Sse<impl Stream<Item=Result<Event, impl std::error::Error>>>, StatusCode> {
     let team = Team::random();
-    shared_state.lock().await.get_game(&game_id).unwrap().state_tx.send_modify(|state| state.player_count += 1);
-    let mut state_rx = shared_state.lock().await.get_game(&game_id).unwrap().state_rx.clone();
+    let mut state_rx = if let Some(game) = shared_state.lock().await.get_game(&game_id) {
+        game.state_tx.send_modify(|state| state.player_count += 1);
+        game.state_rx.clone()
+    } else {
+        return Err(StatusCode::NOT_FOUND);
+    };
     let stream = async_stream::stream!{
         let data = state_rx.borrow().state_update(team);
         yield Event::default().json_data(data);
@@ -137,7 +141,7 @@ async fn handle_state(Path(game_id): Path<String>, Extension(shared_state): Exte
         }
     };
 
-    Sse::new(stream).keep_alive(KeepAlive::default())
+    Ok(Sse::new(stream).keep_alive(KeepAlive::default()))
 }
 
 #[derive(Debug, Clone, Copy, Serialize)]
@@ -172,17 +176,26 @@ struct StateUpdate {
     status: GameStatus,
 }
 
-async fn handle_vote(Path(game_id): Path<String>, extract::Json(payload): extract::Json<VoteRequest>, Extension(shared_state): Extension<Arc<Mutex<SharedState>>>) {
+async fn handle_vote(Path(game_id): Path<String>, extract::Json(payload): extract::Json<VoteRequest>, Extension(shared_state): Extension<Arc<Mutex<SharedState>>>) -> Result<(), StatusCode> {
+    if !payload.mov.len() != 4 {
+        return Err(StatusCode::BAD_REQUEST);
+    }
     let chess_move = ChessMove::from_str(&payload.mov).unwrap();
     let mut state = shared_state.lock().await; 
-    let game = state.get_game(&game_id).unwrap();
+    let game = if let Some(game) = state.get_game(&game_id) {
+        game
+    } else {
+        return Err(StatusCode::NOT_FOUND);
+    };
 
     if !game.state_rx.borrow().board.legal(chess_move) {
-        panic!("Player {} attempted illegal move", payload.player_id);
+        println!("Player {} attempted illegal move", payload.player_id);
+        return Err(StatusCode::BAD_REQUEST);
     }
 
     if !game.voted.insert(payload.player_id.clone()) {
-        panic!("player '{}' already voted", payload.player_id);
+        println!("player '{}' already voted", payload.player_id);
+        return Err(StatusCode::CONFLICT);
     }
 
 
@@ -192,13 +205,15 @@ async fn handle_vote(Path(game_id): Path<String>, extract::Json(payload): extrac
         Entry::Vacant(e) => { e.insert(1); },
     }
 
+    Ok(())
+
 
 }
 
 fn pick_random_move(board: &Board) -> ChessMove {
     let movegen = MoveGen::new_legal(board);
     // There should always be at least one legal move, or the game would already be over
-    movegen.into_iter().choose(&mut rand::thread_rng()).unwrap()
+    movegen.into_iter().choose(&mut rand::thread_rng()).expect("pick_random_move called with no legal moves")
 }
 
 async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
@@ -234,7 +249,6 @@ async fn game_task(game_id: &str, shared_state: Arc<Mutex<SharedState>>) {
     loop {
         let result = state_rx.changed().await;
         if !result.is_ok() {
-            // TODO no panic
             panic!("Failed waiting for players to connect");
         }
         let player_count = state_rx.borrow().player_count;
@@ -367,31 +381,31 @@ impl SharedState {
     }
 }
 
-async fn get_static_file(uri: Uri) -> Result<Response<BoxBody>, (StatusCode, String)> {
+async fn get_static_file(uri: Uri) -> Result<Response<BoxBody>, StatusCode> {
     let req = Request::builder().uri(uri).body(Body::empty()).unwrap();
     // `ServeDir` implements `tower::Service` so we can call it with
     // `tower::ServiceExt::oneshot`
     // When run normally, the root is the workspace root
     match ServeDir::new("static").oneshot(req).await {
         Ok(res) => Ok(res.map(body::boxed)),
-        Err(err) => Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Something went wrong: {}", err),
-        )),
+        Err(err) => {
+            println!("Failed to get static file: {}", err);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
     }
 }
 
-pub async fn file_handler(Path(_): Path<String>, uri: Uri) -> Result<Response<BoxBody>, (StatusCode, String)> {
+async fn handle_static(Path(game_id): Path<String>, Extension(shared_state): Extension<Arc<Mutex<SharedState>>>, uri: Uri) -> Result<Response<BoxBody>, StatusCode> {
+    if shared_state.lock().await.get_game(&game_id).is_none() {
+        return Err(StatusCode::NOT_FOUND);
+    }
     let res = get_static_file(uri.clone()).await?;
 
     if res.status() == StatusCode::NOT_FOUND {
         // try with `.html`
         match format!("{}.html", uri).parse() {
             Ok(uri_html) => get_static_file(uri_html).await,
-            Err(_) => Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Invalid URI".to_string()
-            )),
+            Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
         }
     } else {
         Ok(res)
