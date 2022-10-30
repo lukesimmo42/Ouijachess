@@ -95,7 +95,9 @@ function receiveGame(position, col = false, deadline = false, time = false, stat
 			console.log("no status")
 			break;
 		case "waiting":
-			overlayOn("Waiting for players")
+			if (spectating){
+				overlayOn("Waiting for players")
+			}
 			timerOn = false
 			break;
 		case "ongoing":
@@ -119,7 +121,6 @@ function receiveGame(position, col = false, deadline = false, time = false, stat
 		deadline = deadline.secs_since_epoch*1000 + (deadline.nanos_since_epoch/1000000)
 		time = time.secs_since_epoch*1000 + (time.nanos_since_epoch/1000000)
 		timerMax = deadline-time
-		timerOn = true
 		date = new Date().getTime()
 		timer = (date - time)/timerMax
 	}

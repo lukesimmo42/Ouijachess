@@ -14,6 +14,9 @@ html {
 
 </head>
 <body>	
+<div id="overlay">
+  <div id="text">Overlay Text</div>
+</div>
 <div id="progbarcontainer" style="margin-bottom:0px;height:10%">
 <p style="margin-bottom:10px;margin-top:0px;font-size:36px;">Time remaining to make move: <progress id="bar" value="0" max="1"><span>0</span>%</progress></p>
 </div>
@@ -31,7 +34,7 @@ html {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js" integrity="sha384-s3XgLpvmHyscVpijnseAmye819Ee3yaGa8NxstkJVyA6nuDFjt59u1QvuEl/mecz" crossorigin="anonymous"></script>
 <script src="./static/script.js"></script>
 <script>
-
+var spectating=true
 var container = document.getElementById("container")
 var progb = document.getElementById("bar");
 var progbarcontainer = document.getElementById("progbarcontainer")
@@ -73,6 +76,15 @@ function resize(){
 		makeWide(boardcontainer)
 	}
 	board.resize()
+}
+var overlay = document.getElementById("overlay")
+var overlayText = document.getElementById("text")
+function overlayOn(text){
+	overlayText.innerText = text;
+	overlay.style.display = "block";
+}
+function overlayOff() {
+ 	overlay.style.display = "none";
 }
 </script>
 </body>
