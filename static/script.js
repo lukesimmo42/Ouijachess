@@ -90,7 +90,7 @@ function receiveGame(position, col = false, deadline = false, time = false, stat
 			console.log("no status")
 			break;
 		case "waiting":
-			if (spectating){
+			if (!spectating){
 				overlayOn("Waiting for players")
 			}
 			timerOn = false
