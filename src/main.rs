@@ -177,9 +177,9 @@ struct StateUpdate {
 }
 
 async fn handle_vote(Path(game_id): Path<String>, extract::Json(payload): extract::Json<VoteRequest>, Extension(shared_state): Extension<Arc<Mutex<SharedState>>>) -> Result<(), StatusCode> {
-    if !payload.mov.len() != 4 {
-        return Err(StatusCode::BAD_REQUEST);
-    }
+    //if !payload.mov.len() != 4 {
+    //    return Err(StatusCode::BAD_REQUEST);
+    // }
     let chess_move = ChessMove::from_str(&payload.mov).unwrap();
     let mut state = shared_state.lock().await; 
     let game = if let Some(game) = state.get_game(&game_id) {
