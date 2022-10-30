@@ -46,8 +46,6 @@ use chess::{
     MoveGen,
 };
 
-use time::OffsetDateTime;
-
 use tokio::sync::watch;
 
 use rand::prelude::*;
@@ -58,7 +56,7 @@ use std::collections::hash_map::Entry;
 use std::str::FromStr;
 use std::time::Duration;
 
-type DeadlineTime = std::time::SystemTime;//OffsetDateTime;
+type DeadlineTime = std::time::SystemTime;
 
 #[tokio::main]
 async fn main() {
@@ -67,7 +65,7 @@ async fn main() {
     let _test_game = tokio::spawn(game_task(&"123", shared_state.clone()));
     // build our application with a single route
     let app = Router::new()
-        .route("/", get(|| { async { "Hello world" }})
+        .route("/", get(|| { async { "Hello world" }}))
         .route("/newgame", get(handle_root))
         .route("/start_game", post(handle_start))
         .route("/:id/state", get(handle_state))
@@ -111,7 +109,7 @@ async fn handle_start(Extension(shared_state): Extension<Arc<Mutex<SharedState>>
 
 }
 
-async fn handle_qrcode(Path(game_id): Path<String>, Extension(shared_state): Extension<Arc<Mutex<SharedState>>>) -> axum::response::Response {
+async fn handle_qrcode(Path(game_id): Path<String>) -> axum::response::Response {
     let png = qrcode_generator::to_png_to_vec(
         format!("http://ouijachess.tech/{}/static/index.html", game_id), 
         qrcode_generator::QrCodeEcc::Low,
